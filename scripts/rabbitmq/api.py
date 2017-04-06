@@ -196,16 +196,19 @@ class RabbitMQAPI(object):
         return self.call_api('aliveness-test/%2f')['status']
 
     def check_server(self, item, node_name):
-        '''First, check the overview specific items'''
-        if item == 'message_stats_deliver_get':
-          return self.call_api('overview').get('message_stats', {}).get('deliver_get_details', {}).get('rate',0)
-        elif item == 'message_stats_publish':
-          return self.call_api('overview').get('message_stats', {}).get('publish_details', {}).get('rate',0)
-        elif item == 'rabbitmq_version':
-          return self.call_api('overview').get('rabbitmq_version', 'None')
-        '''Return the value for a specific item in a node's details.'''
-        node_name = node_name.split('.')[0]
-        nodeInfo = self.call_api('nodes')
+        try:
+            '''First, check the overview specific items'''
+            if item == 'message_stats_deliver_get':
+                return self.call_api('overview').get('message_stats', {}).get('deliver_get_details', {}).get('rate',0)
+            elif item == 'message_stats_publish':
+                return self.call_api('overview').get('message_stats', {}).get('publish_details', {}).get('rate',0)
+            elif item == 'rabbitmq_version':
+                return self.call_api('overview').get('rabbitmq_version', 'None')
+            '''Return the value for a specific item in a node's details.'''
+            node_name = node_name.split('.')[0]
+            nodeInfo = self.call_api('nodes')
+        except urllib2.URLError:
+            return 'RabbitMQ API unreachable (RabbitMQ is probably stopped)'
         for nodeData in nodeInfo:
             logging.debug("Checking to see if node name {0} is in {1} for item {2} found {3} nodes".format(node_name, nodeData['name'], item, len(nodeInfo)))
             if node_name in nodeData['name'] or len(nodeInfo) == 1:
